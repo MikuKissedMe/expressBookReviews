@@ -5,6 +5,7 @@ let users = require("./auth_users.js").users;
 const public_users = express.Router();
 
 
+
 public_users.post("/register", (req,res) => {
     const username = req.body.username;
     const password = req.body.password;
@@ -23,45 +24,88 @@ public_users.post("/register", (req,res) => {
     return res.status(404).json({message: "Unable to register user."});
 });
 
+
+
 // Get the book list available in the shop
-public_users.get('/',function (req, res) {
-  res.send(JSON.stringify(books,null,4));
+function fetchAllBooks() {
+  return new Promise((resolve, reject) => {
+      resolve(books);
+  });
+}
+public_users.get('/', async (req, res) => {
+  try {
+    const allBooks = await fetchAllBooks();
+    res.send(JSON.stringify(allBooks, null, 4));
+  } catch (error) {
+    res.status(500).send("Error fetching books");
+  }
 });
 
 // Get book details based on ISBN
-public_users.get('/isbn/:isbn',function (req, res) {
+function fetchBookByIsbn(isbn) {
+  return new Promise((resolve, reject) => {
+      const booksArray = Object.values(books);
+      const book = booksArray.find((book) => book.isbn === isbn);
+      if (book) {
+        resolve(book);
+      } else {
+        reject("Book not found");
+      }
+  });
+}
+public_users.get('/isbn/:isbn', async (req, res) => {
+  try {
     const isbn = req.params.isbn;
-    const booksArray = Object.values(books);
-    const book = booksArray.find((book) => book.isbn === isbn);
-  if (book){
-    res.send(JSON.stringify(book,null,4));
-  } else {
-    res.send("No such book with isbn: " + isbn);
+    const book = await fetchBookByIsbn(isbn);
+    res.send(JSON.stringify(book, null, 4));
+  } catch (error) {
+    res.status(404).send(error);
   }
- });
+});
   
 // Get book details based on author
-public_users.get('/author/:author',function (req, res) {
-    const author = req.params.author;
-    const booksArray = Object.values(books);
-    const book = booksArray.find((book) => book.author === author);
-    if (book){
-        res.send(JSON.stringify(book,null,4));
+function fetchBookByAuthor(author) {
+  return new Promise((resolve, reject) => {
+      const booksArray = Object.values(books);
+      const book = booksArray.find((book) => book.author === author);
+      if (book) {
+        resolve(book);
       } else {
-        res.send("No such book with author: " + author);
+        reject("No such book with author: " + author);
       }
+  });
+}
+public_users.get('/author/:author', async function (req, res) {
+  try {
+    const author = req.params.author;
+    const book = await fetchBookByAuthor(author); 
+    res.send(JSON.stringify(book, null, 4));
+  } catch (error) {
+    res.status(404).send(error); 
+  }
 });
 
 // Get all books based on title
-public_users.get('/title/:title',function (req, res) {
-    const title = req.params.title;
-    const booksArray = Object.values(books);
-    const book = booksArray.find((book) => book.title === title);
-    if (book){
-        res.send(JSON.stringify(book,null,4));
+function fetchBookByTitle(title) {
+  return new Promise((resolve, reject) => {
+      const booksArray = Object.values(books);
+      const book = booksArray.find((book) => book.title === title);
+      if (book) {
+        resolve(book);
       } else {
-        res.send("No such book with title: " + title);
+        reject("No such book with title: " + title);
       }
+  });
+}
+
+public_users.get('/title/:title', async function (req, res) {
+  try {
+    const title = req.params.title;
+    const book = await fetchBookByTitle(title); 
+    res.send(JSON.stringify(book, null, 4));
+  } catch (error) {
+    res.status(404).send(error); 
+  }
 });
 
 //  Get book review

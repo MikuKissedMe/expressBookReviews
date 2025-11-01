@@ -74,7 +74,6 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
     const isbn = req.params.isbn;
     const reviewText = req.body.review;
     
-    // --- UPDATED ---
     // Get the username from the session
     const username = req.session.authorization.username;
 
@@ -88,8 +87,6 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
     }
 
     // 5. Add or update the review using the username as the key
-    
-    // --- UPDATED ---
     // Check if the user already has a review for this book
     const existingReview = book.reviews[username];
 
@@ -103,6 +100,39 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
         res.send(`Your review for "${book.title}" (user: ${username}) has been added.`);
     }
 });
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+    // 1. Check if user is logged in
+    if (!req.session.authorization) {
+        return res.status(401).send('You are not logged in.');
+    }
+
+    // 2. Get data from the request
+    const isbn = req.params.isbn;
+    // Get the username from the session
+    const username = req.session.authorization.username;
+
+    // 3. Find the book
+    const booksArray = Object.values(books);
+    const book = booksArray.find((book) => book.isbn === isbn);
+
+    // 4. Check if the book was found
+    if (!book) {
+        return res.status(404).send(`No such book with isbn: ${isbn}`);
+    }
+
+    // 5.
+    // Check if the user has a review for this book
+    const existingReview = book.reviews[username];
+
+    if (!existingReview) {
+        // No existing review
+        res.send(`There is no existing review for "${book.title}" (user: ${username}).`);
+    } else {
+        delete book.reviews[username];
+        res.send(`Your review for "${book.title}" (user: ${username}) has been deleted.`);
+    }
+});
+
 
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
